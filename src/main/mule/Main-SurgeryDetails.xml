@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="Main-SurgeryDetailsFlow" doc:id="8073c538-049d-48db-bb50-6db133bbaa97" >
+		<logger level="INFO" doc:name="Start" doc:id="17678647-0d06-403c-9466-9f6226253dc9" message='"Start Process Main-SurgeryDetailsFlow"'/>
+		<ee:transform doc:name="Creating Payload" doc:id="e237f41a-9005-4bf9-a011-8081df25e99d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"surgery":attributes.queryParams.SurgeryName,
+	"flag":attributes.queryParams.Surgeryflag
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="print payload" doc:id="388798e6-fe61-4b21-94fd-4cf3918b53e5" message="#[payload]"/>
+		<try doc:name="Try" doc:id="d4cf7ab4-55f2-4674-b1a4-50a506535686" >
+			<http:request method="POST" doc:name="Process For SurgeryDetails" doc:id="6d014278-858e-42c5-a8a2-fa4881f898f0" config-ref="HTTP_Request_configuration" path="/healthyMe" sendCorrelationId="ALWAYS" />
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="516969b6-af63-4048-be18-14bf9527126e" >
+					<logger level="INFO" doc:name="error" doc:id="13b02a31-21cf-45ae-9abd-4997181188c7" message='"error payload"'/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<choice doc:name="Checking StatusCode" doc:id="58496f05-cf2b-4bb4-a8b0-2ec872b0aede" >
+			<when expression="#[attributes.statusCode == 200]">
+				<ee:transform doc:name="Success Response" doc:id="d0073899-4136-43da-9f96-02c39cbcc3fc">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	Data:payload,
+	"key":attributes.statusCode,
+	"choice":"1",
+	"Message":"Hello Right now "++ payload[0].HospitalName ++ " Hospital " ++ "Have " ++ payload[0]."Cost-In-Rupees" ++ " Cost for " ++ payload[0].Surgery ++ " Surgery Thanks For Visiting have Nice Day! "	
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Failure Response" doc:id="1455e745-d892-4bb9-9d9f-e5fe844e48e3" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Message":"Something went Wrong",
+	"Key":404,
+	"choice":"2"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="End" doc:id="54aeb489-235a-4ccd-afdc-358935369a4c" message='"End Process  Main-SurgeryDetailsFlow"'/>
+	</flow>
+</mule>

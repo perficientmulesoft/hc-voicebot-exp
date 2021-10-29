@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="Main-hospitalDetailsFlow" doc:id="2eb1ec26-e820-4234-b677-24ab3388e6c0" >
+		<logger level="INFO" doc:name="Start" doc:id="19666e07-fa0d-4e8f-a938-ce0feb399ecb" message='"Start Process In Main hospitalDetailsFlow"'/>
+		<ee:transform doc:name="Creating Payload" doc:id="958fc618-e528-422a-8419-9ae880e1cfd3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"HospitalName":attributes.queryParams.HospitalName,
+	 "City":attributes.queryParams.HospitalCity,
+	 "AvailableICUBedCount":attributes.queryParams.RemainingICUBed,
+	 "AvailableBedCount":attributes.queryParams.RemainingNormalBed,
+	 "ContactNumber":attributes.queryParams.ContactNumber,
+	 "flag":attributes.queryParams.hospitalDetailsflag,
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="print payload" doc:id="d8019267-7ef7-4a66-9a27-b34fc10649e1" message="#[payload]"/>
+		<try doc:name="Try" doc:id="79e6713d-d971-4b5b-a93e-e953179fd77f" >
+			<http:request method="POST" doc:name="Process For hospitalDetails Update" doc:id="59bbd10c-a3d6-43e0-8f5b-52a0efefe35f" config-ref="HTTP_Request_configuration" path="/healthyMe" sendCorrelationId="ALWAYS" />
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="b48c28c6-ee65-4827-a70c-5617a89be587" >
+					<logger level="INFO" doc:name="Error" doc:id="9195fe6e-bd17-418c-a82a-a003c531395b" message='"Error Payload"'/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<choice doc:name="Checking StatusCode" doc:id="e2795ec3-8f59-4cc6-ab24-94f7165b4e24" >
+			<when expression="#[payload.header.statusCode==200]">
+				<ee:transform doc:name="Success Response" doc:id="3c191668-bc44-4b79-be31-d45c2d1b91d7">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"key":payload.header.statusCode,
+	"Message":payload.header.Message,
+	"choice":"1"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Failure Response" doc:id="ff1a71c0-d776-4a6b-91de-b32e66de3a36" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Message":"Data Not Updated Successfully",
+	"key":404,
+	"choice":"2"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="End" doc:id="85449c82-9531-4cb3-8013-680ec6273556" message='"End Process In Main hospitalDetailsFlow"'/>
+	</flow>
+</mule>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="3e8913ac-8099-473e-a121-2c0ba0d7435f" basePath="/api">
+		<http:request-connection host="hc-prc.us-e2.cloudhub.io" />
+	</http:request-config>
+	<flow name="Main-hospitalbedavailabilityFlow" doc:id="7af8c997-a9cd-4fa9-92ee-e7880ebb02d7" >
+		<logger level="INFO" doc:name="Start" doc:id="48358f86-46da-45fd-bbc1-a2720f501761" message='"Start Process In Main hospitalbedAvailabilityflow"'/>
+		<ee:transform doc:name="Creating Payload" doc:id="d4427c79-d366-42c6-aca3-97dfd4a103a3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"userQuery":attributes.queryParams.bedavailability,
+	"flag":attributes.queryParams.bedavailabilityflag
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="print payload" doc:id="07a76b00-5b44-47f8-b290-2a10dad7bfda" message="#[payload]"/>
+		<try doc:name="Try" doc:id="2f5fc00f-7082-40f8-9f46-ce6f1c3944bf" >
+			<http:request method="POST" doc:name="Process For HospitalBedAvailability" doc:id="d35d406e-1c95-417a-bac1-ccd94faccba9" config-ref="HTTP_Request_configuration" path="/healthyMe" sendCorrelationId="ALWAYS">
+		</http:request>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="97ad3f9a-f8c2-4230-ac9a-ab8121b36b00" >
+					<logger level="INFO" doc:name="Error" doc:id="ed8eef2c-26b0-40c3-aac3-7b82d10af120" message='"Error Payload"'/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<choice doc:name="Checking  size Of payload and Statuscode" doc:id="8d3760bb-feac-4c5b-8e29-fc174234cd49" >
+			<when expression="#[sizeOf(payload) == 1 and attributes.statusCode == 200]">
+				<ee:transform doc:name="Success Response For Single" doc:id="a5fe36f8-1a9f-413a-a184-5621627b35cc">
+					<ee:message>
+						<ee:set-payload><![CDATA[output application/json
+---
+{ 
+	"Data":payload,
+	"Key":attributes.statusCode,
+	"choice":"1",
+    "Message":"Hello right Now " ++ payload[0]."Number Of ICU Beds" ++" ICU Bed AND " ++ payload[0]."Number Of Gen Beds" ++" General Bed Available In " ++ payload[0]."Name Of Hospital" ++" Hospital " ++ payload[0]."Name Of City" ++ " Thanks For Visiting have Nice Day!" 
+}
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<when expression="#[sizeOf(payload) &gt;1 and attributes.statusCode == 200]">
+				<ee:transform doc:name="Success Response for Multiple" doc:id="ed0743f7-5b39-4154-b51a-67605371808c">
+					<ee:message>
+						<ee:set-payload><![CDATA[output application/json
+---
+{
+	"Data":payload,
+	"Key":attributes.statusCode,
+	"choice":"2",
+	"Message":"Hello right Now "++ sizeOf(payload) ++ " Hospital have ICU and Normal Beds Available Thanks For Visiting have Nice Day!"
+}
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Failure Response" doc:id="2ef695cf-1b5a-46d1-8d61-da66c715bd54">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Message":"SomeThing Went wrong",
+	"Key":404,
+	"choice":"3",
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="End" doc:id="af741a26-d3ff-4fc0-af5c-ac3a90294c92" message='"End Of Process In Main-hospitalbedavailabilityFlow"'/>
+	</flow>
+</mule>

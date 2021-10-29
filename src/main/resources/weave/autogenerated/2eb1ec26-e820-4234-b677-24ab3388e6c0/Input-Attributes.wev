@@ -1,0 +1,29 @@
+%dw 2.0
+
+type auto_2eb1ec26_e820_4234_b677_24ab3388e6c0_Input_Attributes = {|
+  clientCertificate?: {|
+    publicKey?: {|  |}, 
+    "type"?: String, 
+    encoded?: Binary
+  |}, 
+  headers: {|  |}, 
+  listenerPath: String, 
+  method: String, 
+  queryParams: {|
+    TotalICUBed: String, 
+    RemainingICUBed: String, 
+    TotalNormalBed: String, 
+    RemainingNormalBed: String, 
+    hospitalDetailsflag: String
+  |}, 
+  queryString: String, 
+  relativePath: String, 
+  remoteAddress: String, 
+  requestPath: String, 
+  requestUri: String, 
+  scheme: String, 
+  uriParams: {|  |}, 
+  version: String, 
+  localAddress: String
+|}
+

@@ -1,0 +1,99 @@
+#%RAML 1.0
+title: hc-voicebot-exp
+description: API used to connect wit prc
+
+/hospitalbedavailability:
+  get:
+    queryParameters:
+      bedavailability:
+        required: true
+        type: string
+      bedavailabilityflag:
+        required: true
+        type: string
+    responses:
+          200:
+                body:
+                      application/json:
+                            example: !include example/example-bedavailability.raml
+          500:
+            body:
+              application/json:
+                example:
+                  !include example/example-Error-bedavailability.raml
+                              
+
+                          
+
+/hospitalDetails:
+  post:
+    queryParameters:
+      HospitalName:
+        required: true
+        type: string
+      HospitalCity:
+        required: true
+        type: string
+      RemainingICUBed:
+        required: true
+        type: string
+      RemainingNormalBed:
+        required: true
+        type: string
+      ContactNumber:
+        required: false
+        type: string
+      hospitalDetailsflag:
+        required: true
+        type: string
+    responses:
+            200:
+                    body:
+                            application/json:
+                                    example: !include example/example-HospitalDetails.raml
+
+
+
+/PatientDetails:
+  get:
+        queryParameters:
+              PatientId:
+                required: true
+                type: string
+              PatientDetailsflag:
+                required: true
+                type: string
+        responses:
+                  200:
+                            body:
+                                      application/json:
+                                        example: !include example/example-PatientDetails.raml
+                  500:
+                    body:
+                                            application/json:
+                                                                    example:
+                                                                                            !include example/example-Error-bedavailability.raml
+                                                                                                      
+                                                                                                        
+                                          
+
+
+
+/SurgeryDetails:
+  get:
+    queryParameters:
+      SurgeryName:
+        required: true
+        type: string
+      Surgeryflag:
+        required: true
+        type: string
+    responses:
+            200:
+                    body:
+                            application/json:
+                                    example:
+                                            !include example/example-SurgeryDetails.raml      
+          
+                                                                  
+                                                  

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="Main-PatientDetailsFlow" doc:id="b64e7b5a-4c13-4ed5-8751-5a52e1329279" >
+		<logger level="INFO" doc:name="Start " doc:id="b8dbc427-600e-4a23-bde4-234b3ef3994d" message='"Start  Process In Main-PatientDetailsFlow"'/>
+		<ee:transform doc:name="Creating Payload" doc:id="6b7c9769-b283-4ef1-a289-4cdc19a76731" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"patientId":attributes.queryParams.PatientId,
+	"flag":attributes.queryParams.PatientDetailsflag
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Print Payload" doc:id="a5df0f3d-a8ba-499d-a015-cca1a8e223fc" message="#[payload]"/>
+		<try doc:name="Try" doc:id="f9c8dff2-0dd3-4be4-aa13-0ce660b66e01" >
+			<http:request method="POST" doc:name="Process For PatientDetails" doc:id="2d1905c6-a3e1-4974-bdbe-54e127e9c4e2" path="/healthyMe" config-ref="HTTP_Request_configuration" sendCorrelationId="ALWAYS">
+		</http:request>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="dd69f1c4-01eb-48c3-86e2-b404ea4059f7" >
+					<logger level="INFO" doc:name="Error" doc:id="527dc107-45b2-47b0-a7a8-074b34c31cdf" message='"error payload"'/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<choice doc:name="Checking StatusCode" doc:id="849bce5f-0963-400c-909d-de80faf307e5" >
+			<when expression="#[attributes.statusCode == 200]">
+				<ee:transform doc:name="Success Response" doc:id="15e616fc-20bb-4dc7-896d-1b6adbb62a6d">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	Data:payload,
+	"Key":attributes.statusCode,
+	"choice":"1",
+	
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Failure Response" doc:id="8f352e47-28fe-4a0b-b2f4-de59cded8068" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	Data:"Patient Record Not Found",
+	"Key":404,
+	"choice":"2",
+	
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="End" doc:id="107e5b13-6e92-4560-996b-913782008b2b" message='"End  Process In Main-PatientDetailsFlow"'/>
+	</flow>
+</mule>
